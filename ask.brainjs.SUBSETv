@@ -1,0 +1,76 @@
+// node ask.train.brainjs.js brain.256x256.json ./dark-light-2/256x256/1.y.jpg 256 256 && eom out.256x256.png
+
+// node ask.train.brainjs.js brain.512x512.json ./dark-light-2/512x512/1.y.jpg 512 512 && eom out.512x512.png
+
+const logger = require('mii-logger.js');
+const brain = require('brain.js');
+const netTools = require('./netTools.js');
+const MNetClass = require('./MNet.js');
+
+const NETWORK = process.argv[ 2 ];
+const IMG_SRC = process.argv[ 3 ];
+
+if( ! NETWORK || !IMG_SRC ){
+  console.error(' No network: aborting ...');
+  console.json({ NETWORK, IMG_SRC });
+  process.exit();
+}
+
+function dictToArr( dict ){
+  let x = [];
+  Object.keys(dict).map((k)=>{ x.push( dict[k] ) })
+  return x;
+}
+
+(async()=>{
+
+  // NeuralNetworkGPU
+  const Net = new brain.NeuralNetwork({
+    inputSize: 2,
+    hiddenLayers: [],
+    outputSize: 2,
+    learningRate: 0.05,
+    activation: 'sigmoid',
+  });
+
+  Net.fromJSON( console.jsonFromFile( NETWORK ) );
+
+  const SUBSET = +(NETWORK.split('SUBSET.')[1].split('.json')[0]) // dataset.256x256.SUBSET.10.json
+
+  const inp_image = await netTools.Jimp.read( IMG_SRC );
+  const W = inp_image.bitmap.width;
+  const H = inp_image.bitmap.height;
+
+  console.json({ NETWORK, IMG_SRC, SUBSET, W, H, }); // return;
+
+  const out_image = new netTools.Jimp((W*2), H, '#FF0000'); // const out_image = await netTools.Jimp.read( '' );
+
+  for( let y=0; y<H; y++ ){
+    for( let x=0; x<(W-SUBSET); x+=SUBSET ){
+
+      let input_subset = [];
+
+      for( let sub_x=x; sub_x<(x+SUBSET); sub_x++ ){
+        input_subset.push( netTools.normalizeRGBAPixel( inp_image, sub_x, y ) );
+      }
+
+      const netRes = Net.run( input_subset );
+
+      for( let sub_x=x, i=0; sub_x<(x+SUBSET); sub_x++, i++ ){
+        let V = Math.floor( netRes[ i ] * 255 );
+        V = V < 0 ? 0 : V > 255 ? 255 : V;
+        const hex = netTools.Jimp.rgbaToInt(V, V, V, 255);
+        out_image.setPixelColor(hex, (sub_x+W), y);
+        out_image.setPixelColor( inp_image.getPixelColour( sub_x, y ), sub_x, y );
+      }
+
+    }
+
+  }
+
+  // const output = `out.${W}x${H}.SUBSET.${SUBSET}.png`;
+  const output = `out.SUBSET.${SUBSET}.png`;
+  await out_image.write( output ); 
+
+})();
+

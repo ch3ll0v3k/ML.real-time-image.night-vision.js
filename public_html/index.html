@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Brain</title>
+
+  <script type="text/javascript" src="./js/browser.js"></script>
+  <script type="text/javascript" src="./js/tools.js"></script>
+
+  <style type="text/css">
+    #video{ display: none; }
+  </style>
+
+  <script type="text/javascript">
+
+    // as: "320x240, 640x480, 800x600, 1280x720"
+
+    const CamSettings = {
+      low: {W:320,H:240},
+      mid: {W:640, H:480},
+      hight: {W:800, H:600},
+      ultra: {W:1280, H:720},
+    };
+
+    let Net = null;
+    let timeout_t = null;
+    let FPS = 1000/60;
+    let frame = 0;
+    let video = null;
+    let canvas = null;
+    let ctx = null;
+
+    const SUBSET = 30;
+    const TRS_HOLD = 250;
+
+    const { W, H } = CamSettings.mid;
+    // const W = 800;
+    // const H = 600;
+
+    window.addEventListener('load', ()=>{
+
+      // return;
+
+      readTextFile('brain.SUBSET.30.json', function(network_t){
+
+
+        // NeuralNetworkGPU, NeuralNetwork
+        Net = new brain.NeuralNetwork({
+          inputSize: 2,
+          hiddenLayers: [],
+          outputSize: 2,
+          activation: 'sigmoid',
+        });
+
+        // load pre-trained network
+        Net.fromJSON( JSON.parse(network_t) );
+
+        console.log(' done ...');
+
+        start();
+
+      });
+
+    });
+
+
+    function loop(){
+
+      clearTimeout(timeout_t);
+      // console.log({frame});
+
+      ctx.drawImage(video, 0, 0, W, H);
+
+      const raw_RGBA = ctx.getImageData(0, 0, W, H);
+
+      const SUBSET_MUL = 4;
+
+      for( let y=0; y<H; y++ ){
+        for( let x=0; x<( W * SUBSET_MUL ); x+=(SUBSET *SUBSET_MUL) ){
+
+          let input_subset = [];
+
+          const X = (y *(W*SUBSET_MUL))+x;
+
+          for( let sub_x=X, index = 0; sub_x<(X+(SUBSET * SUBSET_MUL)); sub_x += (SUBSET_MUL), index++ ){
+
+            const R = raw_RGBA.data[ sub_x +0 ];
+            const G = raw_RGBA.data[ sub_x +1 ];
+            const B = raw_RGBA.data[ sub_x +2 ];
+            // const A = raw_RGBA.data[ sub_x +x +3 ];
+            input_subset.push( (R+G+B) /3 /255 );
+          }
+
+
+          const netRes = Net.run( input_subset );
+          // console.log({
+          //   input_subset,
+          //   netRes,
+          // });
+          // return;
+
+          for( let sub_x=X, index = 0; sub_x<(X+(SUBSET * SUBSET_MUL)); sub_x += (SUBSET_MUL), index++ ){
+
+            const V = Math.floor( netRes[ index ] * 255 );
+
+            raw_RGBA.data[ sub_x +0 ] = V;
+            raw_RGBA.data[ sub_x +1 ] = V;
+            raw_RGBA.data[ sub_x +2 ] = V;
+            raw_RGBA.data[ sub_x +3 ] = 255;
+
+          }
+
+        }
+
+      }
+
+
+
+      ctx.putImageData(raw_RGBA, W+5, 0);
+      // ctx.drawImage(raw_RGBA, W, 0, W, H);
+
+
+      frame++;
+      timeout_t = setTimeout(()=>{ loop(); }, FPS);
+
+    };
+
+    function start(){
+
+      // Grab elements, create settings, etc.
+      video = document.getElementById('video');
+
+      video.setAttribute('width', W);
+      video.setAttribute('height', H);
+
+      canvas = document.getElementById('canvas');
+      canvas.setAttribute('width', W*2);
+      canvas.setAttribute('height', H);
+
+      ctx = canvas.getContext('2d');
+
+      // Get access to the camera!
+      if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        // Not adding `{ audio: true }` since we only want video now
+        navigator.mediaDevices.getUserMedia({ video: true }).then(function(stream) {
+          //video.src = window.URL.createObjectURL(stream);
+          video.srcObject = stream;
+          video.play();
+        });
+      }
+
+      // Trigger photo take
+      // document.getElementById("snap").addEventListener("click", function() {
+      //   ctx.drawImage(video, 0, 0, 640, 480);
+      // });
+
+      loop();
+
+    };
+  </script>
+
+
+</head>
+<body>
+
+  <video id="video" width="800" height="600" autoplay></video>
+  <canvas id="canvas" width="1600" height="600"></canvas>
+  <!-- <button id="snap">Snap Photo</button> -->
+
+</body>
+</html>
