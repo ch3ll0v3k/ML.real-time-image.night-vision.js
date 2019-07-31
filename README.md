@@ -8,23 +8,17 @@ Open public_html/index.html is browser.
 It will start in auto-mode
 
 ------------------
-
-Real-time processing:
-
+##### Real-time processing:
 
 [![print-all](https://github.com/ch3ll0v3k/ML.real-time-image.night-vision.js/raw/master/public_html/example.0.png)]
 
+[![print-all](https://github.com/ch3ll0v3k/ML.real-time-image.night-vision.js/raw/master/public_html/example.1.png)]
 
+[![print-all](https://github.com/ch3ll0v3k/ML.real-time-image.night-vision.js/raw/master/public_html/example.2.png)]
 
-[![print-all](raw.githubusercontent.com/ch3ll0v3k/ML.real-time-image.night-vision.js/master/public_html/example.0.png)]
+[![print-all](https://github.com/ch3ll0v3k/ML.real-time-image.night-vision.js/raw/master/public_html/example.3.png)]
 
-[![print-all](raw.githubusercontent.com/ch3ll0v3k/ML.real-time-image.night-vision.js/master/public_html/example.1.png)]
-
-[![print-all](raw.githubusercontent.com/ch3ll0v3k/ML.real-time-image.night-vision.js/master/public_html/example.2.png)]
-
-[![print-all](raw.githubusercontent.com/ch3ll0v3k/ML.real-time-image.night-vision.js/master/public_html/example.3.png)]
-
-[![print-all](raw.githubusercontent.com/ch3ll0v3k/ML.real-time-image.night-vision.js/master/public_html/example.4.png)]
+[![print-all](https://github.com/ch3ll0v3k/ML.real-time-image.night-vision.js/raw/master/public_html/example.4.png)]
 
 
 
